@@ -16,14 +16,14 @@
   -webkit-text-size-adjust: 100%;
 }
 
-label, h1, h2 {
+label, h1, h2, p {
   color: black;
 }
 
 #root {
+  display: flex;
+  justify-content: center;
   min-height: 100vh;
-  background-color: #ffffff;
-  height: fit-content;
 }
 
 body {

@@ -1,12 +1,17 @@
 import React from "react";
 import './TodoList.css';
 import TodoItem from "../TodoItem/TodoItem";
+import {$showModal} from "../../Main.jsx";
 
-export default function TodoList({bgColor, title, ...props}){
+export default function TodoList({bgColor, title, canCreate = false, ...props}){
   const items = new Array(3).fill({
     title: 'aboba',
     date: Date.now() - 10 * 3600 * 1000
   })
+
+  function createHandler(){
+    $showModal.set(true)
+  }
 
   return (
     <section
@@ -23,6 +28,15 @@ export default function TodoList({bgColor, title, ...props}){
             {...todoItem}
           />
         ))}
+        {canCreate && (
+          <li
+            className='todo-list__plus'
+            role='button'
+            onClick={createHandler}
+          >
+            +
+          </li>
+        )}
       </ul>
     </section>
   );
