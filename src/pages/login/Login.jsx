@@ -1,14 +1,15 @@
 import React from 'react';
 import loginImg from '../../../public/app-icon.png'
 import './Login.css'
-import {useNavigation} from "../../router/useNavigation.js";
 import Input from "../../components/Input/Input";
+import {useNavigate} from "react-router-dom";
 
 export default function Login(){
-  const {pushState} = useNavigation();
+  const navigate = useNavigate();
+
   function signUpHandler(e){
     e.preventDefault();
-    pushState('/app');
+    navigate('app')
   }
 
   return (

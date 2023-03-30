@@ -38,7 +38,8 @@
     justify-content: flex-start;
     flex-direction: column;
     row-gap: 14px;
-    width: 60%;
+    width: 100%;
+    padding: 40px;
 }
 
 .login-page__form__input-container {
@@ -71,5 +72,9 @@
     .login-page__icon-container {
         width: 30%;
         height: 30%;
+    }
+
+    .login-page__form {
+        padding: 20px;
     }
 }

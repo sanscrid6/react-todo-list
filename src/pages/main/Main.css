@@ -12,14 +12,13 @@
 .create-todo-modal {
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 100%;
     justify-content: center;
     align-items: center;
     row-gap: 20px;
 }
 
 .app_container {
-    position: relative;
     width: 100%;
     display: flex;
     justify-content: center;

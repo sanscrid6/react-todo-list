@@ -9,17 +9,25 @@ export default function Modal({show, title, onClose, children}){
     onClose && onClose();
   }
 
-  let offsetTop = 0;
+  useEffect(() => {
+    if(show) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [show])
 
-  if(show){
-    offsetTop = window.scrollY + window.innerHeight / 4;
-  }
+  // let offsetTop = 0;
+  //
+  // if(show){
+  //   offsetTop = window.scrollY + window.innerHeight / 4;
+  // }
 
   return (
     <>
       {show &&
         <dialog className='modal-container' >
-          <div className='modal' style={{top: `${offsetTop}px`}}>
+          <div className='modal' >
             <header className='modal__header'>
               <p>{title}</p>
               <img
@@ -30,7 +38,7 @@ export default function Modal({show, title, onClose, children}){
                 className='modal__header__close-icon'
               />
             </header>
-            <div className='q'>
+            <div className='modal__content'>
               {children}
             </div>
           </div>
