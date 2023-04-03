@@ -1,20 +1,22 @@
-import { createContext, useMemo, useState, useRef, useLayoutEffect } from "react";
+import { createContext, useMemo, useState, useRef, useEffect, useContext } from "react";
 import { getByListIndex, getTranslation } from "./utils";
 import { getIntersectionRect } from "./OverlapingRect";
+import { DragContext } from "./DragProvider";
 
 export const DraggableListContext = createContext({
     items: [],
     registerListItem: (id, ref, itemData, metaData) => {},
     removeListItem: (id) => {},
     reportDragStart: (id) => {},
-    reportDragEnd: (id) => {},
-    onDrag: (id) => {} 
+    reportDragEnd: (id, ref, data) => {},
+    onDrag: (id, ref) => {} 
 });
 
 
 export function DraggableListProvider({listName, onDragEnd, children}){
     const [listItems, setListItems] = useState([]);
     const ref = useRef(null);
+    const dragContext = useContext(DragContext);
     
     const context = useMemo(() => ({
         items: listItems,
@@ -34,6 +36,7 @@ export function DraggableListProvider({listName, onDragEnd, children}){
             const target = listItems[index];
 
             target.value.current.setAttribute('data-start-index', +target.value.current.getAttribute('data-list-index'));
+            target.value.current.setAttribute('data-start-list-id', listName);
 
             const {width, height, left, top} =  target.value.current.getBoundingClientRect();
             ref.current.style.height = `${ref.current.getBoundingClientRect().height}px`;
@@ -53,49 +56,49 @@ export function DraggableListProvider({listName, onDragEnd, children}){
             target.value.current.style.zIndex = '10000';
 
         },
-        reportDragEnd: id => {
+        reportDragEnd: (id, target, data, addNewItem=false) => {
             listItems.forEach(({value, id: itemId}, index) => {
                 if(id !== itemId){
                     value.current.style = null;
-                } else {
-                    value.current.style = null;
-                    value.current.setAttribute('data-is-dragged', false);
                 }
             })
 
+            target.current.style = null;
+            target.current.setAttribute('data-is-dragged', false);
+
             ref.current.style = null;
-            const newItems = []
-            
+
+            const newItems = [];
             let outsideList = 0;
+
             for (const item of listItems) {
-                //console.log(+item.value.current.getAttribute('data-list-index') || +item.value.current.getAttribute('data-start-index'))
                 const index = item.value.current.getAttribute('data-list-index');
                 const startIndex = item.value.current.getAttribute('data-start-index');
                 if(index){
                     newItems[+index + outsideList] = item;
-
                 } else if (startIndex){
                     outsideList++;
                     newItems[+startIndex] = item;   
                 }
             }
 
-           onDragEnd(newItems.filter(item => item.metaData.canDrag).map(item => ({...item.itemData})));
+            if(addNewItem){
+                newItems[+target.current.getAttribute('data-list-index')] = {itemData: {...data}, metaData: {canDrag: true}};
+            }
+
+            onDragEnd(newItems.filter(item => item.metaData.canDrag).map(item => ({...item.itemData})));
         },
-        onDrag: id => {
-            const overlapingRect = getIntersectionRect(ref.current, listItems.find(item => item.id === id).value.current);
+        onDrag: (id, target) => {
+            const overlapingRect = getIntersectionRect(ref.current, target.current);
             
             if(!overlapingRect){
                 return;
             }
 
-            const index = listItems.findIndex(item => item.id === id);
-            const target = listItems[index].value;
-          
             const {width, height, top} = target.current.getBoundingClientRect();
             
             if(overlapingRect.width < width / 2 || overlapingRect.height < height / 2){
-                if(!target.current.hasAttribute('data-list-index')){
+                if(!target.current.hasAttribute('data-list-id') || target.current.getAttribute('data-list-id') !== listName){
                     return;
                 }
 
@@ -133,6 +136,7 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                 if(insertIndex == null){
                     return;
                 }
+
                 
                 if(hasIndex != null){
                     const swapIndex = +target.current.getAttribute('data-list-index');
@@ -147,15 +151,15 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                         item.value.current.getAnimations().forEach(animation => animation.finish());
                     })*/
                     
-                    target.current.setAttribute('data-list-id', listName);
                     swapItem.setAttribute('data-list-index', swapIndex);
                     target.current.setAttribute('data-list-index', insertIndex);
+
                     
                     const {top: swapItemTop} = swapItem.getBoundingClientRect();
     
                     //swapItem.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)';
                     
-                    console.log('swap in');
+                    //console.log('swap in');
                     if(insertIndex !== 0){
                         swapItem.style.transform = getTranslation(swapItem.style.transform, 0, Math.sign(top - swapItemTop) * height);
                     } else {
@@ -163,51 +167,33 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                     }
 
                 } else {
-                    console.log('swap from out')
+                    if(target.current.getAttribute('data-list-id')) return;
+                    //console.log('swap from out')
+
                     listItems.filter(item => item.id !== id).forEach(item => {
                         const index = +item.value.current.getAttribute('data-list-index');
                         if(index >= insertIndex){
                             item.value.current.style.transform = getTranslation(item.value.current.style.transform, 0, height);
                             item.value.current.setAttribute('data-list-index', index + 1);
-                        }
-                        target.current.setAttribute('data-list-index', insertIndex);
-                    })
+                        } 
+                    });
+
+                    target.current.setAttribute('data-list-index', insertIndex);
 
                     ref.current.style.height = `${ref.current.getBoundingClientRect().height + height}px`;
+                  
                 }
-
                 
-                
-
-                //ref.current.style = null;
-                //ref.current.style.height = `${ref.current.getBoundingClientRect().height + height}px`;
-
-                /*const newItems = [] 
-                for(let i = 0; i < items.length; i++){
-                    const {value, id: itemId} = items[i];
-                    const index = +value.current.getAttribute('data-list-index');
-
-                    newItems[index] = items[i];
-                
-                }
-
-                console.log(newItems)
-
-                setListItems(newItems)*/
-
-                /*for (let i = insertIndex; i < items.length; i++) {
-                    const {value, id: itemId} = items[i];
-                    
-                    if(itemId !== id){
-                        value.current.style.transform = `translate(0px, ${targetHeight}px)`;
-                    }
-                    
-                }*/
-
-                //console.log('insert', insertIndex);
+                target.current.setAttribute('data-list-id', listName);
             }
         }
     }), [])
+
+    useEffect(() => {
+        dragContext.registerList(listName, context);
+
+        return () => dragContext.removeList(listName);
+    }, [])
 
     const props = useMemo(() => ({forwardedRef: ref, 'data-list-id': listName}), []);
 

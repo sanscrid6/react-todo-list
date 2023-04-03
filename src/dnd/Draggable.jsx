@@ -1,26 +1,30 @@
 import React, { useCallback, useState, forwardRef, useRef, useEffect, useContext, useLayoutEffect, useMemo} from 'react';
-import { DraggableListContext } from './ListContext';
+import { DraggableListContext } from './DraggableListProvider';
 import {v4 as uuid} from 'uuid';
-import './Dnd.css';
+import { DragContext } from './DragProvider';
 
 // ref 
 export function Draggable({canDrag=true, itemData, children}){
     const [startPosition, setStartPosition] = useState(null);
     const ref = useRef(null);
     const draggableListContext = useContext(DraggableListContext);
+    const dragContext = useContext(DragContext);
     
     const id = useMemo(uuid, []);
 
     useLayoutEffect(() => {
         draggableListContext.registerListItem(id, ref, itemData, {canDrag});
 
-        return () => draggableListContext.removeListItem(id);
+        return () => {
+            draggableListContext.removeListItem(id);
+        };
     }, [itemData, canDrag, id])
 
     useLayoutEffect(() => {
         function onDrag(e){
             if(startPosition){
-                draggableListContext.onDrag(id);
+                //draggableListContext.onDrag(id);
+                dragContext.onDrag(id, ref);
                 ref.current.style.transform = 
                     `translate(${e.pageX - startPosition.x}px, ${e.pageY - startPosition.y}px)`
             }
@@ -28,7 +32,7 @@ export function Draggable({canDrag=true, itemData, children}){
 
         function onDragExit(e){
             if(startPosition){
-                draggableListContext.reportDragEnd(id);
+                dragContext.reportDragEnd(id, ref, itemData);
                 setStartPosition(null);
             }
         }

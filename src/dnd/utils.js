@@ -16,6 +16,3 @@ export function getByListIndex(listItems, index){
     return listItems.find(item => +item.value.current.getAttribute('data-list-index') === index);
 }
 
-export function getIndex(){
-    
-}

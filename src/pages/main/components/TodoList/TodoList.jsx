@@ -3,11 +3,11 @@ import './TodoList.css';
 import TodoItem from "../TodoItem/TodoItem";
 import {$showModal} from "../../Main.jsx";
 import { Draggable } from "../../../../dnd/Draggable";
-import { DraggableListProvider } from "../../../../dnd/ListContext";
+import { DraggableListProvider } from "../../../../dnd/DraggableListProvider";
 
 import { v4 as uuid } from "uuid";
 
-let items = new Array(8).fill({
+let items = new Array(5).fill({
   title: 'aboba',
   date: Date.now() - 10 * 3600 * 1000
 })
