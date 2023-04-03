@@ -32,7 +32,8 @@ export function DraggableListProvider({listName, onDragEnd, children}){
         reportDragStart: id => {
             const index = listItems.findIndex(item => item.id === id);
             const target = listItems[index];
-           // console.log(id, target.value.current);
+
+            target.value.current.setAttribute('data-start-index', +target.value.current.getAttribute('data-list-index'));
 
             const {width, height, left, top} =  target.value.current.getBoundingClientRect();
             ref.current.style.height = `${ref.current.getBoundingClientRect().height}px`;
@@ -50,28 +51,38 @@ export function DraggableListProvider({listName, onDragEnd, children}){
             target.value.current.style.transition = `opacity 0.2s cubic-bezier(0.2, 0, 0, 1) 0s`;
             target.value.current.style.boxSizing = 'border-box';
             target.value.current.style.zIndex = '10000';
+
         },
         reportDragEnd: id => {
-            console.log('end')
-            listItems.forEach(({value, id}, index) => {
-                value.current.style = null;
-                //value.current.setAttribute('data-list-index', index);
-                value.current.setAttribute('data-is-dragged', false);
+            listItems.forEach(({value, id: itemId}, index) => {
+                if(id !== itemId){
+                    value.current.style = null;
+                } else {
+                    value.current.style = null;
+                    value.current.setAttribute('data-is-dragged', false);
+                }
             })
 
             ref.current.style = null;
-            
             const newItems = []
-
+            
+            let outsideList = 0;
             for (const item of listItems) {
-                //console.log(+item.value.current.getAttribute('data-list-index'))
-                newItems[+item.value.current.getAttribute('data-list-index')] = item;
+                //console.log(+item.value.current.getAttribute('data-list-index') || +item.value.current.getAttribute('data-start-index'))
+                const index = item.value.current.getAttribute('data-list-index');
+                const startIndex = item.value.current.getAttribute('data-start-index');
+                if(index){
+                    newItems[+index + outsideList] = item;
+
+                } else if (startIndex){
+                    outsideList++;
+                    newItems[+startIndex] = item;   
+                }
             }
 
-            onDragEnd(newItems.filter(item => item.metaData.canDrag).map(item => ({...item.itemData})));
+           onDragEnd(newItems.filter(item => item.metaData.canDrag).map(item => ({...item.itemData})));
         },
         onDrag: id => {
-            console.log('here')
             const overlapingRect = getIntersectionRect(ref.current, listItems.find(item => item.id === id).value.current);
             
             if(!overlapingRect){
@@ -84,15 +95,19 @@ export function DraggableListProvider({listName, onDragEnd, children}){
             const {width, height, top} = target.current.getBoundingClientRect();
             
             if(overlapingRect.width < width / 2 || overlapingRect.height < height / 2){
+                if(!target.current.hasAttribute('data-list-index')){
+                    return;
+                }
+
                 target.current.removeAttribute('data-list-index');
-                listItems.forEach(({value, id: itemId}) => {
-                    if(itemId !== id){
-                        value.current.style = null;
-                    }
-                   
-                })
+                target.current.removeAttribute('data-list-id');
                 
-                ref.current.style = null;
+                listItems.filter(item => item.id !== id).forEach(({value}, index) => {
+                   value.current.setAttribute('data-list-index', index);
+                   value.current.style = null;
+                })
+
+                ref.current.style.height = `${ref.current.getBoundingClientRect().height - height}px`;
             }
 
             if(overlapingRect.width >= width / 2 && overlapingRect.height >= height / 2){
@@ -113,28 +128,55 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                     } 
                 }
 
-                const swapIndex = +target.current.getAttribute('data-list-index');
+                const hasIndex = target.current.getAttribute('data-list-index');
 
-                if(insertIndex == null || insertIndex === swapIndex){
+                if(insertIndex == null){
                     return;
                 }
-
-                const swapItem = getByListIndex(items, insertIndex).value.current;
-                //console.log(insertIndex, swapIndex, swapItem);
-
-                swapItem.setAttribute('data-list-index', swapIndex);
-                target.current.setAttribute('data-list-index', insertIndex);
                 
-                const {top: swapItemTop} = swapItem.getBoundingClientRect();
-                
-                console.log('swap');
-                if(insertIndex !== 0){
-                    //console.log(getTranslation(swapItem.style.transform, 0, Math.sign(top - swapItemTop) * height), 'calc')
-                    swapItem.style.transform = getTranslation(swapItem.style.transform, 0, Math.sign(top - swapItemTop) * height);
+                if(hasIndex != null){
+                    const swapIndex = +target.current.getAttribute('data-list-index');
+
+                    const swapItem = getByListIndex(items, insertIndex).value.current;
+
+                    /*if(swapItem.getAnimations().length > 0){
+                        return;
+                    }
+    
+                    listItems.forEach(item => {
+                        item.value.current.getAnimations().forEach(animation => animation.finish());
+                    })*/
+                    
+                    target.current.setAttribute('data-list-id', listName);
+                    swapItem.setAttribute('data-list-index', swapIndex);
+                    target.current.setAttribute('data-list-index', insertIndex);
+                    
+                    const {top: swapItemTop} = swapItem.getBoundingClientRect();
+    
+                    //swapItem.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)';
+                    
+                    console.log('swap in');
+                    if(insertIndex !== 0){
+                        swapItem.style.transform = getTranslation(swapItem.style.transform, 0, Math.sign(top - swapItemTop) * height);
+                    } else {
+                        swapItem.style.transform = getTranslation(null, 0, height);
+                    }
+
                 } else {
-                    swapItem.style.transform = getTranslation(null, 0, height);
-                    //console.log(`translate(${0}px, ${height.toFixed(4)}px)`, 'abs')
+                    console.log('swap from out')
+                    listItems.filter(item => item.id !== id).forEach(item => {
+                        const index = +item.value.current.getAttribute('data-list-index');
+                        if(index >= insertIndex){
+                            item.value.current.style.transform = getTranslation(item.value.current.style.transform, 0, height);
+                            item.value.current.setAttribute('data-list-index', index + 1);
+                        }
+                        target.current.setAttribute('data-list-index', insertIndex);
+                    })
+
+                    ref.current.style.height = `${ref.current.getBoundingClientRect().height + height}px`;
                 }
+
+                
                 
 
                 //ref.current.style = null;

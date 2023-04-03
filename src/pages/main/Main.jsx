@@ -18,9 +18,9 @@ export default function Main(){
   return (
     <div className='app_container'>
       <main id='app'>
-        <TodoList bgColor='#FFF4F4' title='TO DO' canCreate={true}/>
-        <TodoList bgColor='#FEFCF3' title='IN PROGRESS' />
-        <TodoList bgColor='#F7FFF3' title='DONE' />
+        <TodoList className='bg-red' title='TO DO' canCreate={true}/>
+        <TodoList className='bg-yellow' title='IN PROGRESS' />
+        <TodoList className='bg-green' title='DONE' />
       </main>
       <Modal
         show={showModal}

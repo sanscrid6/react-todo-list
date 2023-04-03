@@ -34,3 +34,15 @@
     color: white;
     cursor: pointer;
 }
+
+.bg-yellow {
+    background-color: #FEFCF3 ; 
+}
+
+.bg-green {
+    background-color: #F7FFF3 ; 
+}
+
+.bg-red {
+    background-color: #FFF4F4 ; 
+}

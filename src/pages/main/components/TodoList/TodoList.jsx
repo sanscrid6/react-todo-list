@@ -7,7 +7,7 @@ import { DraggableListProvider } from "../../../../dnd/ListContext";
 
 import { v4 as uuid } from "uuid";
 
-let items = new Array(5).fill({
+let items = new Array(8).fill({
   title: 'aboba',
   date: Date.now() - 10 * 3600 * 1000
 })
@@ -33,15 +33,15 @@ export default function TodoList({bgColor, title, canCreate = false, ...props}){
 
   return (
       <section
-            style={{backgroundColor: bgColor}}
-            className='todo-list-container'
+            //style={{backgroundColor: bgColor}}
+            className={`todo-list-container ${props.className}`}
           >
             <header className='todo-list__header'>
               <h1>{title}</h1>
             </header>
             <DraggableListProvider listName={title} onDragEnd={onItemsChanged}>
               {({forwardedRef, ...props}) => (
-                <ul ref={forwardedRef} {...props}>
+                <ul ref={forwardedRef} {...props} className="q">
                   {todos.map((todoItem, index) => (
                     <Draggable key={index} itemData={todoItem}>
                       {({ref, ...rest}) => (

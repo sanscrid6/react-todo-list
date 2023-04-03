@@ -35,7 +35,7 @@ export function Draggable({canDrag=true, itemData, children}){
 
         window.addEventListener('mousemove', onDrag);
         window.addEventListener('mouseup', onDragExit);
-
+      
         return () => {
             window.removeEventListener('mousemove', onDrag);
             window.removeEventListener('mouseup', onDragExit);
