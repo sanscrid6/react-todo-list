@@ -2,6 +2,9 @@ import { useCallback, useState, useRef, useContext, useLayoutEffect, useMemo} fr
 import { DraggableListContext } from './DraggableListProvider';
 import {v4 as uuid} from 'uuid';
 import { DragContext } from './DragProvider';
+import { is } from 'effector';
+
+const isTouches = "ontouchstart" in document.documentElement;
 
 export function Draggable({canDrag=true, itemData, children}){
     const [startPosition, setStartPosition] = useState(null);
@@ -26,8 +29,14 @@ export function Draggable({canDrag=true, itemData, children}){
             if(startPosition){
                 //draggableListContext.onDrag(id);
                 dragContext.onDrag(id, ref);
-                ref.current.style.transform = 
+                if(isTouches){
+                    ref.current.style.transform = 
+                    `translate(${e.targetTouches[0].pageX - startPosition.x}px, ${e.targetTouches[0].pageY - startPosition.y}px)`
+                } else {
+                    ref.current.style.transform = 
                     `translate(${e.pageX - startPosition.x}px, ${e.pageY - startPosition.y}px)`
+                }
+                
             }
         } 
 
@@ -38,12 +47,23 @@ export function Draggable({canDrag=true, itemData, children}){
             }
         }
 
-        window.addEventListener('mousemove', onDrag);
-        window.addEventListener('mouseup', onDragExit);
-      
+        if(isTouches){
+            window.addEventListener('touchmove', onDrag);
+            window.addEventListener('touchend', onDragExit);
+        } else {
+            window.addEventListener('mousemove', onDrag);
+            window.addEventListener('mouseup', onDragExit);
+        }
+
+        
         return () => {
-            window.removeEventListener('mousemove', onDrag);
-            window.removeEventListener('mouseup', onDragExit);
+            if(isTouches){
+                window.removeEventListener('touchmove', onDrag);
+                window.removeEventListener('touchend', onDragExit);
+            } else {
+                window.removeEventListener('mousemove', onDrag);
+                window.removeEventListener('mouseup', onDragExit);
+            }
         }
     }, [startPosition, id])
     
@@ -54,14 +74,21 @@ export function Draggable({canDrag=true, itemData, children}){
 
         draggableListContext.reportDragStart(id);
         dragContext.reportDragStart(id);
-
-        setStartPosition({
-            x: e.pageX,
-            y: e.pageY
-        });
+        if(isTouches){
+            setStartPosition({
+                x: e.targetTouches[0].pageX,
+                y: e.targetTouches[0].pageY
+            });
+        } else {
+            setStartPosition({
+                x: e.pageX,
+                y: e.pageY
+            });
+        }
+       
     }, [startPosition]);
 
-    const props = useMemo(() => ({ref, onDragStart: startDrag, 'data-drag-list-id': id, 'data-is-dragged': false, draggable: true}), [itemData])
+    const props = useMemo(() => ({ref, [`${isTouches ? 'onTouchStart' : 'onDragStart'}`]: startDrag, 'data-drag-list-id': id, 'data-is-dragged': false, draggable: true}), [itemData])
     
     return children(props);
 }
