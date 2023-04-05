@@ -12,9 +12,7 @@ export default function Login(){
 
   function signUpHandler(e){
     e.preventDefault();
-    navigate('app')
-
-    console.log(e);
+    navigate('app');
   }
 
   return (
@@ -24,8 +22,8 @@ export default function Login(){
           <img src={loginImg} alt='login' className='login-page__icon'/>
         </div>
         <form action="" className='login-page__form' onSubmit={signUpHandler} >
-          <Input type='text' label='Login' />
-          <Input type='password' label='Password' />
+          <Input type='text' label='Login' ref={loginRef} />
+          <Input type='password' label='Password' ref={passRef} />
           <button
             type='submit'
             className='login-page__form__submit'

@@ -1,31 +1,22 @@
 import React, { useCallback, useMemo, useState } from "react";
 import './TodoList.css';
 import TodoItem from "../TodoItem/TodoItem";
-import {$showModal} from "../../Main.jsx";
 import { Draggable } from "../../../../dnd/Draggable";
 import { DraggableListProvider } from "../../../../dnd/DraggableListProvider";
 
 import { v4 as uuid } from "uuid";
-
-let items = new Array(5).fill({
-  title: 'aboba',
-  date: Date.now() - 10 * 3600 * 1000
-})
-
-items = items.map((item, index) => {
-  return {...item, title: item.title + index}
-})
+import { $todos, openModal, updateTodos } from "../../../../state";
+import { useStore } from "effector-react";
 
 export default function TodoList({bgColor, title, canCreate = false, ...props}){
-
-  const [todos, setTodos] = useState(items);
+  const todos = useStore($todos.map(todos => todos[title]));
  
   const createHandler = useCallback(() => {
-    $showModal.set(true)
+   openModal({});
   }, [])
 
   const onItemsChanged = useCallback((items) => {
-    setTodos(items);
+    updateTodos({status: title, items});
   }, [])
 
 
@@ -33,7 +24,6 @@ export default function TodoList({bgColor, title, canCreate = false, ...props}){
 
   return (
       <section
-            //style={{backgroundColor: bgColor}}
             className={`todo-list-container ${props.className}`}
           >
             <header className='todo-list__header'>
@@ -41,12 +31,13 @@ export default function TodoList({bgColor, title, canCreate = false, ...props}){
             </header>
             <DraggableListProvider listName={title} onDragEnd={onItemsChanged}>
               {({forwardedRef, ...props}) => (
-                <ul ref={forwardedRef} {...props} className="q">
+                <ul ref={forwardedRef} {...props} className="todo-list__content">
                   {todos.map((todoItem, index) => (
                     <Draggable key={index} itemData={todoItem}>
                       {({ref, ...rest}) => (
                         <TodoItem
                           forwardedRef={ref}
+                          listId={title}
                           {...rest}
                           {...todoItem}
                         />

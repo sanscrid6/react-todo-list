@@ -1,9 +1,8 @@
-import React, { useCallback, useState, forwardRef, useRef, useEffect, useContext, useLayoutEffect, useMemo} from 'react';
+import { useCallback, useState, useRef, useContext, useLayoutEffect, useMemo} from 'react';
 import { DraggableListContext } from './DraggableListProvider';
 import {v4 as uuid} from 'uuid';
 import { DragContext } from './DragProvider';
 
-// ref 
 export function Draggable({canDrag=true, itemData, children}){
     const [startPosition, setStartPosition] = useState(null);
     const ref = useRef(null);
@@ -14,9 +13,11 @@ export function Draggable({canDrag=true, itemData, children}){
 
     useLayoutEffect(() => {
         draggableListContext.registerListItem(id, ref, itemData, {canDrag});
+        dragContext.registerListItem(id, ref, itemData, {canDrag});
 
         return () => {
             draggableListContext.removeListItem(id);
+            dragContext.removeListItem(id);
         };
     }, [itemData, canDrag, id])
 
@@ -46,12 +47,13 @@ export function Draggable({canDrag=true, itemData, children}){
         }
     }, [startPosition, id])
     
-    const startDrag = useCallback((e) => {
+    const startDrag = useCallback(async (e) => {
         if(!canDrag){
             return;
         }
 
         draggableListContext.reportDragStart(id);
+        dragContext.reportDragStart(id);
 
         setStartPosition({
             x: e.pageX,
@@ -59,7 +61,7 @@ export function Draggable({canDrag=true, itemData, children}){
         });
     }, [startPosition]);
 
-    const props = useMemo(() => ({ref, onMouseDown: startDrag, 'data-drag-list-id': id, 'data-is-dragged': false }), [itemData])
+    const props = useMemo(() => ({ref, onDragStart: startDrag, 'data-drag-list-id': id, 'data-is-dragged': false, draggable: true}), [itemData])
     
     return children(props);
 }

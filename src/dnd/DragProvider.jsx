@@ -12,10 +12,25 @@ export const DragContext = createContext({
 
 
 export function DragProvider({children}){
-    const [dragLists, setDragLists] = useState([]);
+    const [items] = useState([]);
+    const [dragLists] = useState([]);
 
 
     const context = useMemo(() => ({
+        registerListItem: (id, value, itemData, metaData) => {
+            items.push({id, value, itemData, metaData});
+        },
+        removeListItem: (id) => {
+            const index = items.findIndex(item => item.id === id);
+            if(index !== -1){
+                items.splice(index, 1);
+            }
+        },
+        reportDragStart: id => {
+            items.forEach(item => {
+                item.value.current.style.pointerEvents = 'none';
+            })
+        },
         registerList: (id, context) => {
             dragLists.push({id, context});
         },
@@ -43,6 +58,12 @@ export function DragProvider({children}){
             } else if(startList) {
                 startList.context.reportDragEnd(id, ref, data)
             } 
+
+            setTimeout(() => {
+                items.forEach(item => {
+                    item.value.current.style.pointerEvents = '';
+                })
+            })
         }
     }), [])
 

@@ -9,14 +9,29 @@
     flex-direction: column;
     padding: 10px;
     user-select: none;
+    position: relative;
+    width: 100%;
 }
 
 .todo-item__text {
     margin-top: 5px;
+    max-width: 90%;
+    overflow: hidden;
+    white-space: nowrap;
     align-self: flex-start;
+    text-overflow: ellipsis;
 }
 
 .todo-item__date {
     align-self: flex-end;
+}
 
+.todo-item__delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: fit-content;
+    background-color: transparent;
+    border: none;
+    appearance:unset;
 }
