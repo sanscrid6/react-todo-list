@@ -42,7 +42,7 @@ export default function Modal(){
     d.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
 
-    if(d.getTime() <= now.getTime()){
+    if(d.getTime() < now.getTime()){
       errors.deadline = 'Choose valid date';
     }
 

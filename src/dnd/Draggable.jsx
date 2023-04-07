@@ -1,16 +1,31 @@
-import { useCallback, useState, useRef, useContext, useLayoutEffect, useMemo} from 'react';
+import { useCallback, useState, useRef, useContext, useLayoutEffect, useMemo, useEffect} from 'react';
 import { DraggableListContext } from './DraggableListProvider';
 import {v4 as uuid} from 'uuid';
 import { DragContext } from './DragProvider';
-import { is } from 'effector';
 
 const isTouches = "ontouchstart" in document.documentElement;
+const scrollSpeed = 10;
+
+const scrollZone = {
+    height: 150
+}
 
 export function Draggable({canDrag=true, itemData, children}){
     const [startPosition, setStartPosition] = useState(null);
-    const ref = useRef(null);
+    const [hasScroll, setHasScroll] = useState(false);
+
     const draggableListContext = useContext(DraggableListContext);
     const dragContext = useContext(DragContext);
+
+    const ref = useRef(null);
+    
+    useEffect(() => {
+        if (window.innerHeight < document.body.clientHeight) {
+            setHasScroll(true);
+        } else {
+            setHasScroll(false);
+        }
+    }, [document.body.clientHeight, window.innerHeight])
     
     const id = useMemo(uuid, []);
 
@@ -27,9 +42,26 @@ export function Draggable({canDrag=true, itemData, children}){
     useLayoutEffect(() => {
         function onDrag(e){
             if(startPosition){
-                //draggableListContext.onDrag(id);
                 dragContext.onDrag(id, ref);
+                
+                if(hasScroll){
+                    if(isTouches){
+                        if(e.targetTouches[0].clientY <= scrollZone.height){
+                            window.scroll({top: window.scrollY - scrollSpeed});
+                        } else if(e.targetTouches[0].clientY >= window.innerHeight - scrollZone.height){
+                            window.scroll({top: window.scrollY + scrollSpeed});
+                        }
+                    } else {
+                        if(e.clientY <= scrollZone.height){
+                            window.scroll({top: window.scrollY - scrollSpeed});
+                        } else if(e.clientY >= window.innerHeight - scrollZone.height){
+                            window.scroll({top: window.scrollY + scrollSpeed});
+                        }
+                    }  
+                }
+
                 if(isTouches){
+                    e.preventDefault();
                     ref.current.style.transform = 
                     `translate(${e.targetTouches[0].pageX - startPosition.x}px, ${e.targetTouches[0].pageY - startPosition.y}px)`
                 } else {
@@ -48,14 +80,13 @@ export function Draggable({canDrag=true, itemData, children}){
         }
 
         if(isTouches){
-            window.addEventListener('touchmove', onDrag);
+            window.addEventListener('touchmove', onDrag, {passive: false});
             window.addEventListener('touchend', onDragExit);
         } else {
             window.addEventListener('mousemove', onDrag);
             window.addEventListener('mouseup', onDragExit);
         }
 
-        
         return () => {
             if(isTouches){
                 window.removeEventListener('touchmove', onDrag);
@@ -65,7 +96,7 @@ export function Draggable({canDrag=true, itemData, children}){
                 window.removeEventListener('mouseup', onDragExit);
             }
         }
-    }, [startPosition, id])
+    }, [startPosition, id, hasScroll])
     
     const startDrag = useCallback(async (e) => {
         if(!canDrag){
@@ -74,6 +105,7 @@ export function Draggable({canDrag=true, itemData, children}){
 
         draggableListContext.reportDragStart(id);
         dragContext.reportDragStart(id);
+
         if(isTouches){
             setStartPosition({
                 x: e.targetTouches[0].pageX,
@@ -88,7 +120,13 @@ export function Draggable({canDrag=true, itemData, children}){
        
     }, [startPosition]);
 
-    const props = useMemo(() => ({ref, [`${isTouches ? 'onTouchStart' : 'onDragStart'}`]: startDrag, 'data-drag-list-id': id, 'data-is-dragged': false, draggable: true}), [itemData])
+    const props = useMemo(
+        () => ({ref, 
+               [`${isTouches ? 'onTouchStart' : 'onDragStart'}`]: startDrag,
+                'data-drag-list-id': id,
+                'data-is-dragged': false,
+                 draggable: true}),
+         [itemData])
     
     return children(props);
 }

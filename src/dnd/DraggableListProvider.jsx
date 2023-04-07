@@ -26,6 +26,8 @@ function resetStyles(value){
 }
 
 
+
+
 export function DraggableListProvider({listName, onDragEnd, children}){
     const [listItems] = useState([]);
     const ref = useRef(null);
@@ -60,11 +62,11 @@ export function DraggableListProvider({listName, onDragEnd, children}){
 
             target.value.current.setAttribute('data-is-dragged', true);
            
-            target.value.current.style.top = `${top}px`;
+            target.value.current.style.top = `${top+window.scrollY}px`;
             target.value.current.style.left = `${left}px`;
             target.value.current.style.height = `${height}px`;
             target.value.current.style.width = `${width}px`;
-            target.value.current.style.position = 'fixed';
+            target.value.current.style.position = 'absolute';
             target.value.current.style.transition = `opacity 0.2s cubic-bezier(0.2, 0, 0, 1) 0s`;
             target.value.current.style.boxSizing = 'border-box';
             target.value.current.style.zIndex = '10000';
