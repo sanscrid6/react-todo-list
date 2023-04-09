@@ -148,17 +148,20 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                     } 
                 }
 
+                const intercestionRectWithContainer = getIntersectionRect(ref.current, target.current);
+
                 if(items.length === 0){
                     insertIndex = 0;
                 }
 
-                const hasIndex = target.current.getAttribute('data-list-index');
+                const hasIndex = target.current.hasAttribute('data-list-index');
 
-                if(insertIndex == null){
-                    return;
-                }
                 
-                if(hasIndex != null){
+                if(hasIndex){
+                    if(insertIndex == null){
+                        return;
+                    }
+
                     const swapIndex = +target.current.getAttribute('data-list-index');
                     const swapItem = getByListIndex(items, insertIndex)?.value?.current;
                     
@@ -191,6 +194,17 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                     if(target.current.getAttribute('data-list-id')) return;
                     //console.log('swap from out')
 
+                    if(items.length > 0 &&
+                        insertIndex == null &&
+                        intercestionRectWithContainer.width > width / 2 && 
+                        intercestionRectWithContainer.height > height / 2){
+                            insertIndex = items.length; 
+                    }
+
+                    if(insertIndex == null){
+                        return;
+                    }
+
                     listItems.filter(item => item.id !== id).forEach(item => {
                         const index = +item.value.current.getAttribute('data-list-index');
                         if(index >= insertIndex){
@@ -200,7 +214,8 @@ export function DraggableListProvider({listName, onDragEnd, children}){
                     });
 
                     target.current.setAttribute('data-list-index', insertIndex);
-                    ref.current.style.height = `${ref.current.getBoundingClientRect().height + height}px`;
+                    const allItemsHeight = items.reduce((acc, curr) => acc += curr.value.current.getBoundingClientRect().height, 0)
+                    ref.current.style.height = `${allItemsHeight + height}px`;
                 }
                 
                 target.current.setAttribute('data-list-id', listName);
