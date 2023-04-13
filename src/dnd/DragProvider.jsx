@@ -11,7 +11,7 @@ export const DragContext = createContext({
 });
 
 
-export function DragProvider({children}){
+export function DragProvider({children, onDragEnd}){
     const [items] = useState([]);
     const [dragLists] = useState([]);
 
@@ -63,6 +63,13 @@ export function DragProvider({children}){
                 items.forEach(item => {
                     item.value.current.style.pointerEvents = '';
                 })
+
+                onDragEnd && onDragEnd(dragLists.reduce((acc, {id, context}) => {
+                    return {
+                        ...acc,
+                        [id]: context.items.filter(item => item.metaData.canDrag).map(item => item.itemData)
+                    }
+                }, {}));
             })
         }
     }), [])

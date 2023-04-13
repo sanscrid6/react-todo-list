@@ -1,8 +1,10 @@
 import Login from "./pages/login/Login";
 import Main from "./pages/main/Main.jsx";
-import {RouterProvider, createBrowserRouter} from "react-router-dom";
+import {RouterProvider, createBrowserRouter, useNavigate} from "react-router-dom";
+import {useSession, } from '@supabase/auth-helpers-react'
 
-const router = createBrowserRouter([
+
+const authenticatedRouter = createBrowserRouter([
   {
     path: "/",
     element: <Login />,
@@ -14,11 +16,21 @@ const router = createBrowserRouter([
   }
 ]);
 
+const defaultRouter = createBrowserRouter([
+  {
+    path: "/*",
+    element: <Login />,
+    
+  },
+]);
+
 
 
 function App() {
+  const session = useSession(); 
+
   return (
-    <RouterProvider router={router} />
+      <RouterProvider router={session ? authenticatedRouter : defaultRouter} />
   )
 }
 

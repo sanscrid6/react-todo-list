@@ -73,8 +73,6 @@ export function DraggableListProvider({listName, onDragEnd, children}){
 
         },
         reportDragEnd: (id, target, data, addNewItem=false) => {
-           
-
             listItems.forEach(({value, id: itemId}, index) => {
                 if(id !== itemId){
                    resetStyles(value)

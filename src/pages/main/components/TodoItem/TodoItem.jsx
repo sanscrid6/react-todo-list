@@ -1,6 +1,8 @@
 import React, { useCallback } from "react";
 import './TodoItem.css';
 import { $todos, openModal, updateTodos } from "../../../../state";
+import { supabase, googleUrl } from "../../../../supabase";
+import {useSession} from '@supabase/auth-helpers-react';
 
 const dateFormatter = new Intl.DateTimeFormat('en', {
   day: '2-digit',
@@ -9,15 +11,31 @@ const dateFormatter = new Intl.DateTimeFormat('en', {
   hour: 'numeric'
 })
 
-export default function TodoItem({forwardedRef, id, name, deadline, listId, ...props}){
+export default function TodoItem({forwardedRef, id, name, deadline, listId, calendarEventId, ...props}){
+  const session = useSession();
 
-  const deleteHandler = useCallback((e) => {
+  const deleteHandler = useCallback(async (e) => {
     e.stopPropagation();
-    updateTodos({status: listId, items: $todos.getState()[listId].filter(item => item.id !== id)})
+    try {
+      const res = await fetch(googleUrl + `/${calendarEventId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + session.provider_token
+        },
+      });
+  
+      await supabase
+                  .from('todos')
+                  .update([{userId: localStorage.getItem('userId'), data: JSON.stringify($todos.getState())}])
+                  .eq('userId', localStorage.getItem('userId'))
+  
+      updateTodos({status: listId, items: $todos.getState()[listId].filter(item => item.id !== id)})
+    } catch (error) {
+      console.error(error) 
+    }
   }, [id, listId]);
 
   const updateHandler = useCallback((e) => {
-    console.log('click')
     openModal({
       id,
       name,
