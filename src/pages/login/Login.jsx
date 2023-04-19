@@ -16,7 +16,6 @@ export default function Login(){
 
 
   if(session){
-    console.log(session)
     localStorage.setItem('userId', session.user.id)
     localStorage.setItem('providerToken', session.provider_token)
     navigate('app')
@@ -31,7 +30,7 @@ export default function Login(){
       provider: 'google',
       options: {
         scopes: 'https://www.googleapis.com/auth/calendar',
-        redirectTo: 'http://localhost:5173'
+        redirectTo: window.location.origin
       }
     })
 
