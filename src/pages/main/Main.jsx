@@ -3,33 +3,15 @@ import './Main.css';
 import TodoList from "./components/TodoList/TodoList";
 import Modal from "./components/Modal/Modal";
 import { DragProvider } from '../../dnd/DragProvider';
-import { $modalActive, ITEM_STATUS, closeModal, initTodos } from '../../state';
-import {useSession, useSupabaseClient} from '@supabase/auth-helpers-react'
-import { supabase } from '../../supabase';
+import {ITEM_STATUS, initTodos } from '../../state';
+import { supabaseApi } from '../../apis/supabaseApi';
+import { todoService } from '../../services/todoService';
 
 
 export default function Main(){
-  const supabaseClient = useSupabaseClient();
-  const session = useSession();
-
-
-  function handleCreateTodo(e){
-    e.preventDefault();
-    closeModal();
-  }
-
-  function closeModalHandler(){
-    closeModal();
-  }
-
   useEffect(() => {
     async function getTodos(){
-      const {data} = await supabase.from('todos').select('data').eq('userId', localStorage.getItem('userId'))
-      if(!data[0]){
-        await supabase.from('todos').insert([{userId: localStorage.getItem('userId'), data: ""}])
-      } else {
-        data[0].data && initTodos(JSON.parse(data[0].data))
-      }
+      await todoService.initTodos()
     }
 
     getTodos()
@@ -37,15 +19,11 @@ export default function Main(){
 
   async function saveItems(items){
     try {
-      await supabase
-                .from('todos')
-                .update([{userId: localStorage.getItem('userId'), data: JSON.stringify(items)}])
-                .eq('userId', localStorage.getItem('userId'))
+      await supabaseApi.updateTodos(items);
     } catch (error) {
       console.error(error) 
     }
   }
-
 
   return (
     <DragProvider onDragEnd={saveItems}>

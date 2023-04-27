@@ -1,5 +1,5 @@
 import { createStore, createEvent, sample } from "effector";
-import { supabase } from "../supabase";
+import lodash from 'lodash'
 
 export const ITEM_STATUS = Object.freeze({
   TODO: 'TODO',
@@ -45,7 +45,7 @@ sample({
       [status]: items,
     }
     
-    return data;
+    return lodash.cloneDeep(data);
   },
   target: $todos,
 })

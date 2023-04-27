@@ -10,6 +10,10 @@ const scrollZone = {
     height: 150
 }
 
+function getTransaltionString(x, y){
+    return `translate(${x.toFixed(4)}px, ${y.toFixed(4)}px)`
+}
+
 export function Draggable({canDrag=true, itemData, children}){
     const [startPosition, setStartPosition] = useState(null);
     const [hasScroll, setHasScroll] = useState(false);
@@ -62,11 +66,15 @@ export function Draggable({canDrag=true, itemData, children}){
 
                 if(isTouches){
                     e.preventDefault();
-                    ref.current.style.transform = 
-                    `translate(${e.targetTouches[0].pageX - startPosition.x}px, ${e.targetTouches[0].pageY - startPosition.y}px)`
+                    ref.current.style.transform = getTransaltionString(
+                        e.targetTouches[0].pageX - startPosition.x,
+                        e.targetTouches[0].pageY - startPosition.y
+                    )
                 } else {
-                    ref.current.style.transform = 
-                    `translate(${e.pageX - startPosition.x}px, ${e.pageY - startPosition.y}px)`
+                    ref.current.style.transform = getTransaltionString(
+                        e.pageX - startPosition.x,
+                        e.pageY - startPosition.y
+                    )
                 }
                 
             }
@@ -121,12 +129,13 @@ export function Draggable({canDrag=true, itemData, children}){
     }, [startPosition]);
 
     const props = useMemo(
-        () => ({ref, 
-               [`${isTouches ? 'onTouchStart' : 'onDragStart'}`]: startDrag,
-                'data-drag-list-id': id,
-                'data-is-dragged': false,
-                 draggable: true}),
-         [itemData])
+        () => ({
+            ref, 
+            [`${isTouches ? 'onTouchStart' : 'onDragStart'}`]: startDrag,
+            'data-drag-list-id': id,
+            'data-is-dragged': false,
+            draggable: true
+        }), [itemData])
     
     return children(props);
 }

@@ -4,16 +4,11 @@ import closeIcon from './close-icon.png';
 import { $modalActive, $modalProps, $todos, ITEM_STATUS, closeModal, updateTodos } from "../../../../state";
 import { useStore } from "effector-react";
 import Input from '../../../../components/Input/Input'
-
-import {v4 as uuid} from 'uuid';
 import { useState } from "react";
-import { googleUrl } from "../../../../supabase";
-import {useSession} from '@supabase/auth-helpers-react';
-import { supabase } from "../../../../supabase";
+import { todoService } from "../../../../services/todoService";
 
 export default function Modal(){
   const [errors, setErrors] = useState({});
-  const session = useSession();
 
   const show = useStore($modalActive);
   const modalProps = useStore($modalProps);
@@ -30,97 +25,28 @@ export default function Modal(){
   async function handleSubmit(e){
     e.preventDefault();
     try {
-      const errors = {};
-
       const name = nameRef.current.value;
       const deadline = deadlineRef.current.value;
-
-      if(!name){
-        errors.name = 'Name is required';
-      }
-
-      if(!deadline){
-        errors.deadline = 'Expired date is required';
-      }
-      const d = new Date(deadline);
-      const now = new Date();
-      d.setHours(0, 0, 0, 0);
-      now.setHours(0, 0, 0, 0);
-
-      if(d.getTime() < now.getTime()){
-        errors.deadline = 'Choose valid date';
-      }
-
-      if(Object.keys(errors).length > 0){
-        setErrors(errors);
-      } else {
-        setErrors({});
+      let errors
         
-        if(isCreateModal){
-          const res = await fetch(googleUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + session.provider_token
-            },
-            body: JSON.stringify({
-              summary: name,
-              description: name,
-              start: {
-                dateTime: d.toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions.timeZone
-              },
-              end: {
-                dateTime: new Date(d.getTime() + 24*3600*1000).toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions.timeZone
-              }
-            })
-          }).then(res => res.json());
-
-          if(!res.id){
-            console.error(res)
-            return;
-          }
-
-          updateTodos({status: ITEM_STATUS.TODO, items: [...$todos.getState().TODO, {name, deadline, id: uuid(), calendarEventId: res.id}]})
-        } else {
-          const listToUpdate = $todos.getState()[modalProps.status];
-          const index = listToUpdate.findIndex(item => item.id == modalProps.id);
-          const res = await fetch(googleUrl + `/${listToUpdate[index].calendarEventId}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': 'Bearer ' + session.provider_token
-            },
-            body: JSON.stringify({
-              summary: name,
-              description: name,
-              start: {
-                dateTime: d.toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions.timeZone
-              },
-              end: {
-                dateTime: new Date(d.getTime() + 24*3600*1000).toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions.timeZone
-              }
-            })
-          }).then(res => res.json());
-
-          if(!res.id){
-            console.error(res)
-            return;
-          }
-
-          listToUpdate[index] = {...listToUpdate[index], name, deadline}
-          updateTodos({status: modalProps.status, items: listToUpdate});
-        }
-
-        await supabase
-                  .from('todos')
-                  .update([{userId: localStorage.getItem('userId'), data: JSON.stringify($todos.getState())}])
-                  .eq('userId', localStorage.getItem('userId'))
-
-        closeModal();
-
+      if(isCreateModal){
+        const res = await todoService.createTodo({name, deadline})
+        errors = res.errors
+      } else {
+        const res = await todoService.updateTodo({
+          name, 
+          deadline,
+          id: modalProps.id,
+          status: modalProps.status
+        })
+        errors = res.errors
       }
+
+      setErrors(errors || {})
+
+      if(!errors){
+        closeModal();
+      }  
     } catch (error) {
         console.error(error)
     }

@@ -1,19 +1,14 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import loginImg from '../../../public/app-icon.png'
 import './Login.css'
-import Input from "../../components/Input/Input";
 import {useNavigate} from "react-router-dom";
-import {supabase } from '../../supabase';
-import {useSession, useSupabaseClient} from '@supabase/auth-helpers-react'
+import {useSession} from '@supabase/auth-helpers-react'
+import { supabaseApi } from '../../apis/supabaseApi';
 
 
 export default function Login(){
-  const loginRef = useRef(null);
-  const passRef = useRef(null);
-
   const session = useSession();
   const navigate = useNavigate();
-
 
   if(session){
     localStorage.setItem('userId', session.user.id)
@@ -25,21 +20,11 @@ export default function Login(){
 
   async function signUpHandler(e){
     e.preventDefault();
-    console.log(window.location.origin)
-    const {error} = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        scopes: 'https://www.googleapis.com/auth/calendar',
-        redirectTo: window.location.origin
-      }
-    })
+    const {error} = await supabaseApi.signIn();
 
     if(error){
       console.log(error)
-    } else {
-      //navigate('app');
     }
-    
   }
 
   return (
